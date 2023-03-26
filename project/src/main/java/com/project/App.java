@@ -12,6 +12,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
@@ -27,7 +32,7 @@ public class App {
         try {
             // Check if original file exists
             DocumentBuilder builder = factory.newDocumentBuilder();
-            String path = "Melody_C_for_testing_version2.musicxml";
+            String path = "Golden Slippers - transposed from D into C.musicxml";
             File f = new File(path);
             if (!f.exists()) {
                 System.out.println("File does not exists");
@@ -298,8 +303,8 @@ public class App {
         
         
         // 2. Mapping of frequency of n-gram NOTES and m-gram CHORDS
-        System.out.println("Task 2: Note and Rootstep frequency calculation");
-        System.out.println("-----------------------------------------------");
+        System.out.println("Task 2: Note and Rootstep frequency calculation and storing in DB");
+        System.out.println("-----------------------------------------------------------------");
         HashMap<String,Integer> hm = new HashMap<String,Integer>();
         for(String str: noteRootstepString) {
         	if(hm.containsKey(str)) {
@@ -309,6 +314,7 @@ public class App {
         		hm.put(str, 1);
         	}
         }
+        dbConnection(hm);
         for(Map.Entry<String, Integer> set : hm.entrySet()) {
         	System.out.println(set.getKey() + " -----------------> " + set.getValue());
         }
@@ -321,7 +327,6 @@ public class App {
         createUpdatedmusicXML(updatedMeasureArrayList);
         
     }
-    
     
     /*
      * Creation of an xml file of only symbols strings which describes the melody
@@ -1125,6 +1130,40 @@ public class App {
 			
 		}
 		return updatedMeasureArrayList;
+	}
+	
+	/*
+	 * This function updates frequency details to the database
+	 */
+	public static void dbConnection(HashMap<String,Integer> hm) {
+		try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/musicdb?useSSL=false", "root", "Qwerty@123");
+            Statement stmt = conn.createStatement();
+            
+            for (Map.Entry<String, Integer> entry : hm.entrySet()) {
+                String key = entry.getKey();
+                Integer frequency = entry.getValue();
+            
+	            // Check if key is present in the database
+	            ResultSet rs = stmt.executeQuery("SELECT frequency FROM musictable WHERE mapping = '" + key + "'");
+	            if (rs.next()) {
+	                // If key is present, get the current value and increment it
+	            	frequency = rs.getInt("frequency") + frequency.intValue();
+	                stmt.executeUpdate("UPDATE musictable SET frequency = " + frequency + " WHERE mapping = '" + key + "'");
+	            } else {
+	                // If key is not present, insert a new row with the key and value of 1
+	                stmt.executeUpdate("INSERT INTO musictable (mapping, frequency) VALUES ('" +key+ "', "+frequency+")");
+	                //frequency = 1;
+	            }
+	            //System.out.println("The frequency of mapping is now " + frequency);   
+	        }
+            
+            conn.close();
+        } catch (Exception e) {
+            System.err.println("Got an exception!");
+            System.err.println(e.getMessage());
+        }
 	}
 }
 
