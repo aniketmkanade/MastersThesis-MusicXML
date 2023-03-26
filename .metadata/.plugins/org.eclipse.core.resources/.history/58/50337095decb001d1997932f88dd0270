@@ -27,7 +27,7 @@ public class App {
         try {
             // Check if original file exists
             DocumentBuilder builder = factory.newDocumentBuilder();
-            String path = "Melody_C_for_testing_version2.musicxml";
+            String path = "Golden Slippers - transposed from D into C.musicxml";
             File f = new File(path);
             if (!f.exists()) {
                 System.out.println("File does not exists");
@@ -177,17 +177,7 @@ public class App {
                             }
                             else if (measureChildElement.getNodeName().equals("barline")) 
                             {
-                                NodeList barlineChildren = measureChildElement.getChildNodes();
-                                boolean isRepeat = false;
-                                for (int k = 0; k < barlineChildren.getLength(); k++) // [pitch, duration, instrument,voice,type, stem, staff]
-                                {
-                                    // Getting a specific note
-                                    Node barlineChild = barlineChildren.item(k);
-                                    if (barlineChild.getNodeName().equals("repeat"))
-                                    	isRepeat = true;
-                                }
-                            	if(!isRepeat)
-                            		break outlook;
+                            	break outlook;
                             }
                         }
                         harmony.setRootStep(rootStep);

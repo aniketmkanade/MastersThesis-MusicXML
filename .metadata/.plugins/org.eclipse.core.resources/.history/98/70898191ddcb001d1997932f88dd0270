@@ -177,17 +177,7 @@ public class App {
                             }
                             else if (measureChildElement.getNodeName().equals("barline")) 
                             {
-                                NodeList barlineChildren = measureChildElement.getChildNodes();
-                                boolean isRepeat = false;
-                                for (int k = 0; k < barlineChildren.getLength(); k++) // [pitch, duration, instrument,voice,type, stem, staff]
-                                {
-                                    // Getting a specific note
-                                    Node barlineChild = barlineChildren.item(k);
-                                    if (barlineChild.getNodeName().equals("repeat"))
-                                    	isRepeat = true;
-                                }
-                            	if(!isRepeat)
-                            		break outlook;
+                            	break outlook;
                             }
                         }
                         harmony.setRootStep(rootStep);
