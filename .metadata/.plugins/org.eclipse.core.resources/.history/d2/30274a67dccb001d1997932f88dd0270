@@ -1,0 +1,14 @@
+package com.project;
+
+public class Barline {
+	String barStyle;
+
+	public String getBarStyle() {
+		return barStyle;
+	}
+
+	public void setBarStyle(String barStyle) {
+		this.barStyle = barStyle;
+	}
+	
+}
