@@ -25,14 +25,17 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class App {
-    public ArrayList<Measure> extractInformation2() {
+	public static boolean isDurationShort = false;
+    public ArrayList<Measure> extractInformation2(String filename) {
+    	
         ArrayList<Measure> measureArrayList = new ArrayList<Measure>();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        
 
         try {
             // Check if original file exists
             DocumentBuilder builder = factory.newDocumentBuilder();
-            String path = "Golden Slippers - transposed from D into C.musicxml";
+            String path = filename;
             File f = new File(path);
             if (!f.exists()) {
                 System.out.println("File does not exists");
@@ -40,7 +43,7 @@ public class App {
             }
 
             // If original file exists, copy it to tempMusic.xml file.
-            File file = new File("tempMusic.xml");
+            File file = new File("convertedMusic/tempMusic.xml");
             boolean result = file.createNewFile();
             // Copy contents of original file to tempMusic.xml file.
             copyContent(f, file);
@@ -60,8 +63,8 @@ public class App {
             File tempFile = new File(file + "tmp.xml");
             originalFile.delete();
             tempFile.renameTo(originalFile);
-            System.out.println("The first two lines have been deleted from the file.");
-            System.out.println("------------------------------------------------------------------");
+            //System.out.println("The first two lines have been deleted from the file.");
+            //System.out.println("------------------------------------------------------------------");
 
             Document document = builder.parse(file);
 
@@ -70,6 +73,42 @@ public class App {
 
             // Get all elements by tag name
             NodeList measureList = document.getElementsByTagName("measure");
+            
+            //Checking the musicxml is of type 516 duration or 1024 duration
+            int durationCounter = 0;  
+            Node tempmeasure = measureList.item(0);
+            if (tempmeasure.getNodeType() == Node.ELEMENT_NODE) 
+            {
+                // Getting children of measure
+                NodeList measureChildList = tempmeasure.getChildNodes();
+                for (int j = 0; j < measureChildList.getLength(); j++)
+                {
+                    Node measureChild = measureChildList.item(j);
+                    Note noteObj = new Note();
+                    if (measureChild.getNodeType() == Node.ELEMENT_NODE) 
+                    {
+                        Element measureChildElement = (Element) measureChild;
+                        if (measureChildElement.getNodeName().equals("note")) 
+                        {
+                            NodeList noteList = measureChildElement.getChildNodes();
+                            for (int k = 0; k < noteList.getLength(); k++) // [pitch, duration, instrument,voice,type, stem, staff]
+                            {
+                                // Getting a specific note
+                                Node noteChild = noteList.item(k);
+                                if (noteChild.getNodeType() == Node.ELEMENT_NODE) {
+                                    Element noteChildElement = (Element) noteChild;
+                                    if (noteChildElement.getNodeName().equals("duration")) {
+                                    	durationCounter += Integer.parseInt(noteChildElement.getTextContent());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if(durationCounter == 512)
+            	isDurationShort = true;
+            
             outlook:
             
             // Iterating through each measure
@@ -179,21 +218,26 @@ public class App {
                                 noteObj.setType(type);
                                 noteObj.setBeam(beam);
                                 noteArrayList.add(noteObj);
+                                //System.out.println(step + " " + duration);
                             }
-                            else if (measureChildElement.getNodeName().equals("barline")) 
-                            {
-                                NodeList barlineChildren = measureChildElement.getChildNodes();
+                            /*else if (measureChildElement.getNodeName().equals("barline")) // Used to identify end part of sheet
+                            {                            	
+                                 barlineChildren = measureChildElement.getChildNodes();
                                 boolean isRepeat = false;
                                 for (int k = 0; k < barlineChildren.getLength(); k++) // [pitch, duration, instrument,voice,type, stem, staff]
                                 {
                                     // Getting a specific note
                                     Node barlineChild = barlineChildren.item(k);
-                                    if (barlineChild.getNodeName().equals("repeat"))
-                                    	isRepeat = true;
+                                    
+                                    //System.out.println("barlineChild.getNodeName(): " + barlineChild.getNodeName());
+                                    if (barlineChild.getNodeName().equals("bar-style")) {
+                                    	if(barlineChild.getTextContent().equals("light-light") || barlineChild.getTextContent().equals("repeat"))
+                                    		isRepeat = true;
+                                    }
                                 }
                             	if(!isRepeat)
                             		break outlook;
-                            }
+                            }*/
                         }
                         harmony.setRootStep(rootStep);
                         harmony.setKind(kind);
@@ -208,6 +252,7 @@ public class App {
         }
         return measureArrayList;
     }
+    
     public static void copyContent(File a, File b) throws Exception {
         FileInputStream in = new FileInputStream(a);
         FileOutputStream out = new FileOutputStream(b);
@@ -224,114 +269,135 @@ public class App {
                 out.close();
             }
         }
-        System.out.println("File Copied");
+        //System.out.println("File Copied");
     }
 
     public static void main(String[] args) {
-        App app = new App();
-        
-        // Extract information from musicxml
-        ArrayList<Measure> measureList = app.extractInformation2();
+    	
+    	// Specify the directory path
+        String directoryPath = "musicFolder/";
 
-        /*for (int s = 0; s < measureList.size(); s++) {
-            System.out.println("Measure ->");
+        // Create a file object for the directory
+        File directory = new File(directoryPath);
 
-            System.out.println("Harmony : ");
+        // Get a list of all files in the directory
+        File[] files = directory.listFiles();
 
-            System.out.println("rootstep : " + measureList.get(s).getHarmony().getRootStep());
-            System.out.println("kind : " + measureList.get(s).getHarmony().getKind());
-
-            System.out.println(s+1);
-            for (int t = 0; t < measureList.get(s).getNoteList().size(); t++) {
-                System.out.println("Step : " + measureList.get(s).getNoteList().get(t).getStep());
-                System.out.println("Duration : " + measureList.get(s).getNoteList().get(t).getDuration());
-                System.out.println("Type : " + measureList.get(s).getNoteList().get(t).getType());
-                System.out.println("Beam : " + measureList.get(s).getNoteList().get(t).getBeam());
-                System.out.println();
-            }
-            System.out.println();
-        }*/
-        
-        
-        // 1. Get lists and rootsteps in the format of 5
-        ArrayList<UpdatedMeasure> updatedMeasureArrayList = app.calculateUpdatedMeasureList(measureList);
-        ArrayList<String> step  = new ArrayList<String>();
-        ArrayList<String> rootStep  = new ArrayList<String>();
-        for(int x=0;x<updatedMeasureArrayList.size();x++) {
-			//System.out.println("-------------Measure " + (int)(x+1) + "------------");
-			UpdatedMeasure updatedMeasure = updatedMeasureArrayList.get(x);
-			UpdatedHarmony updatedHarmony = updatedMeasure.getHarmony();
-			//System.out.println("Rootstep: " + updatedHarmony.getRootStep());
-			//System.out.println();
-			ArrayList<UpdatedNote> updatedNoteList = updatedMeasure.getNoteList();
-			for(int y=0; y<updatedNoteList.size(); y++) {
-				UpdatedNote updatedNote = updatedNoteList.get(y);
-				//System.out.println("Step: " + updatedNote.getStep());
-				//System.out.println("Duration: " + updatedNote.getDuration());
-				//System.out.println("Type: " + updatedNote.getType());
-				//System.out.println("Beam: " + updatedNote.getBeam());
-				step.add(updatedNote.getStep());
-				rootStep.add(updatedHarmony.getRootStep());
-			}
-			//System.out.println();
-		}
-        
-        ArrayList<String> noteRootstepString = new ArrayList<String>();
-        System.out.println();
-        System.out.println("Task 1: Note and Rootstep calculation");
-        System.out.println("-------------------------------------");
-        System.out.println("  Note          Rootstep");
-        System.out.println("----------------------------");
-        for(int x=0; x<step.size()-5; x++) {
-        	StringBuffer temp = new StringBuffer("");
-    		for(int y=x; y<x+5; y++) {
-    			System.out.print(step.get(y).toLowerCase() + " ");
-    			temp.append(step.get(y).toLowerCase() + " ");
-    		}
-    		System.out.print("  -  ");
-    		temp.append("  -  ");
-    		for(int y=x; y<x+5; y++) {
-    			System.out.print(rootStep.get(y) + " ");
-    			temp.append(rootStep.get(y) + " ");
-    		}
-    		System.out.println();
-    		String temp2 = new String(temp);
-    		noteRootstepString.add(temp2);
-        }
-        System.out.println();
-        System.out.println();
-        
-        
-        // 2. Mapping of frequency of n-gram NOTES and m-gram CHORDS
-        System.out.println("Task 2: Note and Rootstep frequency calculation and storing in DB");
-        System.out.println("-----------------------------------------------------------------");
-        HashMap<String,Integer> hm = new HashMap<String,Integer>();
-        for(String str: noteRootstepString) {
-        	if(hm.containsKey(str)) {
-        		hm.put(str, hm.get(str) + 1);
-        	}
-        	else {
-        		hm.put(str, 1);
-        	}
-        }
-        dbConnection(hm);
-        for(Map.Entry<String, Integer> set : hm.entrySet()) {
-        	System.out.println(set.getKey() + " -----------------> " + set.getValue());
-        }
-        
-        
-        // 3. Create updated XML
-        System.out.println();
-        System.out.println("Task 3: XML file creation");
-        System.out.println("-----------------------------------------------");
-        createUpdatedmusicXML(updatedMeasureArrayList);
+        // Loop through each file and print its name
+        for (File file : files) 
+        {
+           if (file.isFile()) 
+           {
+		        App app = new App();
+		        
+		        // Extract information from musicxml
+		        ArrayList<Measure> measureList = app.extractInformation2(directoryPath + "" + file.getName());
+		        System.out.println();
+		        System.out.println("Output for " + file.getName() + " File:");
+		        System.out.println("***********************************************************");
+		        System.out.println();
+		        /*for (int s = 0; s < measureList.size(); s++) {
+		            System.out.println("Measure ->");
+		
+		            System.out.println("Harmony : ");
+		
+		            System.out.println("rootstep : " + measureList.get(s).getHarmony().getRootStep());
+		            System.out.println("kind : " + measureList.get(s).getHarmony().getKind());
+		
+		            System.out.println(s+1);
+		            for (int t = 0; t < measureList.get(s).getNoteList().size(); t++) {
+		                System.out.println("Step : " + measureList.get(s).getNoteList().get(t).getStep());
+		                System.out.println("Duration : " + measureList.get(s).getNoteList().get(t).getDuration());
+		                System.out.println("Type : " + measureList.get(s).getNoteList().get(t).getType());
+		                System.out.println("Beam : " + measureList.get(s).getNoteList().get(t).getBeam());
+		                System.out.println();
+		            }
+		            System.out.println();
+		        }*/
+		        
+		        
+		        // 1. Get lists and rootsteps in the format of 5
+		        ArrayList<UpdatedMeasure> updatedMeasureArrayList = app.calculateUpdatedMeasureList(measureList);
+		        ArrayList<String> step  = new ArrayList<String>();
+		        ArrayList<String> rootStep  = new ArrayList<String>();
+		        for(int x=0;x<updatedMeasureArrayList.size();x++) {
+					//System.out.println("-------------Measure " + (int)(x+1) + "------------");
+					UpdatedMeasure updatedMeasure = updatedMeasureArrayList.get(x);
+					UpdatedHarmony updatedHarmony = updatedMeasure.getHarmony();
+					//System.out.println("Rootstep: " + updatedHarmony.getRootStep());
+					//System.out.println();
+					ArrayList<UpdatedNote> updatedNoteList = updatedMeasure.getNoteList();
+					for(int y=0; y<updatedNoteList.size(); y++) {
+						UpdatedNote updatedNote = updatedNoteList.get(y);
+						//System.out.println("Step: " + updatedNote.getStep());
+						//System.out.println("Duration: " + updatedNote.getDuration());
+						//System.out.println("Type: " + updatedNote.getType());
+						//System.out.println("Beam: " + updatedNote.getBeam());
+						step.add(updatedNote.getStep());
+						rootStep.add(updatedHarmony.getRootStep());
+					}
+					//System.out.println();
+				}
+		        
+		        ArrayList<String> noteRootstepString = new ArrayList<String>();
+		        System.out.println();
+		        System.out.println("Task 1: Note and Rootstep calculation");
+		        System.out.println("-------------------------------------");
+		        System.out.println("  Note          Rootstep");
+		        System.out.println("----------------------------");
+		        for(int x=0; x<step.size()-5; x++) {
+		        	StringBuffer temp = new StringBuffer("");
+		    		for(int y=x; y<x+5; y++) {
+		    			System.out.print(step.get(y).toLowerCase() + " ");
+		    			temp.append(step.get(y).toLowerCase() + " ");
+		    		}
+		    		System.out.print("  -  ");
+		    		temp.append("  -  ");
+		    		for(int y=x; y<x+5; y++) {
+		    			System.out.print(rootStep.get(y) + " ");
+		    			temp.append(rootStep.get(y) + " ");
+		    		}
+		    		System.out.println();
+		    		String temp2 = new String(temp);
+		    		noteRootstepString.add(temp2);
+		        }
+		        System.out.println();
+		        System.out.println();
+		        
+		        
+		        // 2. Mapping of frequency of n-gram NOTES and m-gram CHORDS
+		        System.out.println("Task 2: Note and Rootstep frequency calculation and storing in DB");
+		        System.out.println("-----------------------------------------------------------------");
+		        HashMap<String,Integer> hm = new HashMap<String,Integer>();
+		        for(String str: noteRootstepString) {
+		        	if(hm.containsKey(str)) {
+		        		hm.put(str, hm.get(str) + 1);
+		        	}
+		        	else {
+		        		hm.put(str, 1);
+		        	}
+		        }
+		        dbConnection(hm);
+		        for(Map.Entry<String, Integer> set : hm.entrySet()) {
+		        	System.out.println(set.getKey() + " -----------------> " + set.getValue());
+		        }
+		        
+		        
+		        // 3. Create updated XML
+		        System.out.println();
+		        System.out.println("Task 3: XML file creation");
+		        System.out.println("-----------------------------------------------");
+		        createUpdatedmusicXML(updatedMeasureArrayList, file.getName());
+	           }
+           		isDurationShort = false;
+	        }
         
     }
     
     /*
      * Creation of an xml file of only symbols strings which describes the melody
      */
-	public static void createUpdatedmusicXML(ArrayList<UpdatedMeasure> updatedMeasureArrayList) {
+	public static void createUpdatedmusicXML(ArrayList<UpdatedMeasure> updatedMeasureArrayList, String fileName) {
 		try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -1009,7 +1075,7 @@ public class App {
             
 
             // Write the content into XML file
-            File xmlFile = new File("convertedMusic.xml");
+            File xmlFile = new File("convertedMusic/" + fileName);
             javax.xml.transform.TransformerFactory transformerFactory = javax.xml.transform.TransformerFactory
                     .newInstance();
             javax.xml.transform.Transformer transformer = transformerFactory.newTransformer();
@@ -1061,56 +1127,103 @@ public class App {
 				} catch (NumberFormatException nfe) {
 		            System.out.println("NumberFormat Exception: invalid duration string");
 		        }
-				
-				if(1 > prev && 1 < sum)
+				//System.out.println("value of :" + isDurationShort);
+				if(!isDurationShort) 
 				{
-					UpdatedNote updatedNote = new UpdatedNote();
-					updatedNote.setStep(note.getStep());
-					updatedNote.setDuration("256");
-					updatedNote.setBeam(note.getBeam());
-					updatedNote.setType("quarter");
-					updatedNoteList.add(updatedNote);
+					if(1 > prev && 1 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if(257 > prev && 257 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if(767 > prev && 767 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if(1023 > prev && 1023 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if (sum > 1024)
+					{
+						System.out.println("For " + (int)(i+1) + "th measure notes structure/durations are not correct.");
+						return null;
+					}
 				}
-				if(257 > prev && 257 < sum)
+				else
 				{
-					UpdatedNote updatedNote = new UpdatedNote();
-					updatedNote.setStep(note.getStep());
-					updatedNote.setDuration("256");
-					updatedNote.setBeam(note.getBeam());
-					updatedNote.setType("quarter");
-					updatedNoteList.add(updatedNote);
+					if(1 > prev && 1 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if(129 > prev && 129 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if(383 > prev && 383 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if(511 > prev && 511 < sum)
+					{
+						UpdatedNote updatedNote = new UpdatedNote();
+						updatedNote.setStep(note.getStep());
+						updatedNote.setDuration("256");
+						updatedNote.setBeam(note.getBeam());
+						updatedNote.setType("quarter");
+						updatedNoteList.add(updatedNote);
+					}
+					if (sum > 512)
+					{
+						System.out.println("For " + (int)(i+1) + "th measure notes structure/durations are not correct.");
+						return null;
+					}
+					
 				}
-				if(767 > prev && 767 < sum)
-				{
-					UpdatedNote updatedNote = new UpdatedNote();
-					updatedNote.setStep(note.getStep());
-					updatedNote.setDuration("256");
-					updatedNote.setBeam(note.getBeam());
-					updatedNote.setType("quarter");
-					updatedNoteList.add(updatedNote);
-				}
-				if(1023 > prev && 1023 < sum)
-				{
-					UpdatedNote updatedNote = new UpdatedNote();
-					updatedNote.setStep(note.getStep());
-					updatedNote.setDuration("256");
-					updatedNote.setBeam(note.getBeam());
-					updatedNote.setType("quarter");
-					updatedNoteList.add(updatedNote);
-				}
-				if (sum > 1024)
-				{
-					System.out.println("For " + (int)(i+1) + "th measure notes structure/durations are not correct.");
-					return null;
-				}
-				
 			}
 			updatedMeasure.setHarmony(updatedHarmony);
 			updatedMeasure.setNoteList(updatedNoteList);
 			updatedMeasureArrayList.add(updatedMeasure);
 		}
 		
-		System.out.println("------------------Temp solution-----------------------");
+		/*System.out.println("------------------Temp solution-----------------------");
 		for(int x=0;x<updatedMeasureArrayList.size();x++) {
 			UpdatedMeasure updatedMeasure = updatedMeasureArrayList.get(x);
 			UpdatedHarmony updatedHarmony = updatedMeasure.getHarmony();
@@ -1128,7 +1241,7 @@ public class App {
 			System.out.println();
 			System.out.println();
 			
-		}
+		}*/
 		return updatedMeasureArrayList;
 	}
 	
