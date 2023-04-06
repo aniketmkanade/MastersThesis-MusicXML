@@ -317,18 +317,18 @@ public class App {
 		        
 		        
 		        // 1. Get lists and rootsteps in the format of 5
-		        ArrayList<Measure> updatedMeasureArrayList = app.calculateUpdatedMeasureList(measureList);
+		        ArrayList<UpdatedMeasure> updatedMeasureArrayList = app.calculateUpdatedMeasureList(measureList);
 		        ArrayList<String> step  = new ArrayList<String>();
 		        ArrayList<String> rootStep  = new ArrayList<String>();
 		        for(int x=0;x<updatedMeasureArrayList.size();x++) {
 					//System.out.println("-------------Measure " + (int)(x+1) + "------------");
-					Measure updatedMeasure = updatedMeasureArrayList.get(x);
-					Harmony updatedHarmony = updatedMeasure.getHarmony();
+					UpdatedMeasure updatedMeasure = updatedMeasureArrayList.get(x);
+					UpdatedHarmony updatedHarmony = updatedMeasure.getHarmony();
 					//System.out.println("Rootstep: " + updatedHarmony.getRootStep());
 					//System.out.println();
-					ArrayList<Note> updatedNoteList = updatedMeasure.getNoteList();
+					ArrayList<UpdatedNote> updatedNoteList = updatedMeasure.getNoteList();
 					for(int y=0; y<updatedNoteList.size(); y++) {
-						Note updatedNote = updatedNoteList.get(y);
+						UpdatedNote updatedNote = updatedNoteList.get(y);
 						//System.out.println("Step: " + updatedNote.getStep());
 						//System.out.println("Duration: " + updatedNote.getDuration());
 						//System.out.println("Type: " + updatedNote.getType());
@@ -397,7 +397,7 @@ public class App {
     /*
      * Creation of an xml file of only symbols strings which describes the melody
      */
-	public static void createUpdatedmusicXML(ArrayList<Measure> updatedMeasureArrayList, String fileName) {
+	public static void createUpdatedmusicXML(ArrayList<UpdatedMeasure> updatedMeasureArrayList, String fileName) {
 		try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -733,7 +733,7 @@ public class App {
             rootElement.appendChild(part);
 
             
-            for(Measure measureData: updatedMeasureArrayList) {
+            for(UpdatedMeasure measureData: updatedMeasureArrayList) {
             	
 	            /*-----------------------First Measure------------------------------- */
 	            // Create an measure element
@@ -1093,15 +1093,15 @@ public class App {
 	/*
 	 * This function performs conversion of generated xml files "music XML" into the symbol strings that describes the melody
 	 */
-	public ArrayList<Measure> calculateUpdatedMeasureList(ArrayList<Measure> measureList) {
-		ArrayList<Measure> updatedMeasureArrayList = new ArrayList<Measure>();
+	public ArrayList<UpdatedMeasure> calculateUpdatedMeasureList(ArrayList<Measure> measureList) {
+		ArrayList<UpdatedMeasure> updatedMeasureArrayList = new ArrayList<UpdatedMeasure>();
 		
 		for(int i=0; i<measureList.size(); i++) {
 			Measure measure = measureList.get(i);
 			
-			Measure updatedMeasure = new Measure();
-			Harmony updatedHarmony = new Harmony();
-			ArrayList<Note> updatedNoteList = new ArrayList<Note>();
+			UpdatedMeasure updatedMeasure = new UpdatedMeasure();
+			UpdatedHarmony updatedHarmony = new UpdatedHarmony();
+			ArrayList<UpdatedNote> updatedNoteList = new ArrayList<UpdatedNote>();
 			
 			//Updating the harmony
 			String rootstep = measure.getHarmony().getRootStep();
@@ -1132,7 +1132,7 @@ public class App {
 				{
 					if(1 > prev && 1 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
@@ -1141,7 +1141,7 @@ public class App {
 					}
 					if(257 > prev && 257 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
@@ -1150,7 +1150,7 @@ public class App {
 					}
 					if(767 > prev && 767 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
@@ -1159,7 +1159,7 @@ public class App {
 					}
 					if(1023 > prev && 1023 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
@@ -1176,7 +1176,7 @@ public class App {
 				{
 					if(1 > prev && 1 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
@@ -1185,7 +1185,7 @@ public class App {
 					}
 					if(129 > prev && 129 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
@@ -1194,7 +1194,7 @@ public class App {
 					}
 					if(383 > prev && 383 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
@@ -1203,7 +1203,7 @@ public class App {
 					}
 					if(511 > prev && 511 < sum)
 					{
-						Note updatedNote = new Note();
+						UpdatedNote updatedNote = new UpdatedNote();
 						updatedNote.setStep(note.getStep());
 						updatedNote.setDuration("256");
 						updatedNote.setBeam(note.getBeam());
